@@ -94,6 +94,8 @@ bib_comment(bib(comment,comment, [kv('key', Val)])) -->
 
 bib_string(bib(string, string, Keys)) -->
   ("@String" ; "@string"), "{", s_, bib_keys(Keys), s_, "}", s_.
+bib_string(bib(string, string, Keys)) -->
+  ("@String" ; "@string"), "(", s_, bib_keys(Keys), s_, ")", s_.
 
 bib_type(Type) -->
   wordanum(TypeC), {atom_codes(Type, TypeC)}.
@@ -107,7 +109,12 @@ bib_kv(kv(Key,Val)) -->
   bib_key(Key), s_, "=", s_, bib_value(Val), s_, ("," ; "").
 
 bib_key(Key) --> wordanum(KeyC), {atom_codes(Key, KeyC)}.
-bib_value(Val) --> (bib_word(Val) ; bib_braces(Val); bib_quotes(Val)).
+
+bib_value(Val) -->(bib_word(V1); bib_braces(V1); bib_quotes(Val)),
+  s_, "#", s_, bib_value(V2), {[V1,V2] = Val}.
+bib_value(Val) --> bib_word(Val).
+bib_value(Val) --> bib_braces(Val).
+bib_value(Val) --> bib_quotes(Val).
 
 bib_word(Val) --> wordanum(ValC), {atom_codes(Val, ValC)}.
 bib_braces(Val) --> parse_brace(ValC), {atom_codes(Val, ValC)}.
@@ -126,7 +133,6 @@ parse_quote(Val) --> "\"", parse_qstring(ValS), "\"", {append( [0'"| ValS], "\""
 parse_qstring([0'\\| [Char|Val]] ) --> "\\", [Char], parse_qstring(Val).
 parse_qstring([Char|Val]) --> [Char], {not_quote(Char)}, parse_qstring(Val).
 parse_qstring([]) --> [].
-
 
 
 
