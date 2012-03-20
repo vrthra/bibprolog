@@ -83,7 +83,7 @@ parse_txt(Txt) :- phrase(bibs(Bibs), Txt), write(Bibs).
 bibs([Bib | Bibs]) --> s_, bib(Bib), s_, bibs(Bibs).
 bibs([]) --> [].
 
-bib(Bib) --> ( bib_comment(Bib) ; bib_string(Bib) ; bib_entry(Bib) ).
+bib(Bib) --> ( bib_comment(Bib) ; bib_preamble(Bib) ; bib_string(Bib) ; bib_entry(Bib) ).
 
 bib_entry(bib(Type, Name, Keys)) -->
   "@", bib_type(Type),
@@ -91,6 +91,9 @@ bib_entry(bib(Type, Name, Keys)) -->
 
 bib_comment(bib(comment,comment, [kv('key', Val)])) -->
   ("@Comment" ; "@comment"), bib_braces(Val), s_.
+
+bib_preamble(bib(preamble,preamble, [kv('key', Val)])) -->
+  ("@Preamble" ; "@preamble"), bib_braces(Val), s_.
 
 bib_string(bib(string, string, Keys)) -->
   ("@String" ; "@string"), "{", s_, bib_keys(Keys), s_, "}", s_.
