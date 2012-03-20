@@ -35,14 +35,10 @@ ispunct(Ch) :-
 islchar(Ch) :-
   Ch = 0'_; Ch = 0'. ; Ch = 0'-; Ch = 0'+ .
 
-%  Ch = 0'~; Ch = 0'@; Ch = 0'#; Ch = 0'$; Ch = 0'%; Ch = 0'^; Ch = 0'&; Ch = 0'*; Ch = 0'_, Ch = 0'+, Ch = 0'-;
-% Ch = 0'`; Ch = 0':; Ch = 0';; Ch = 0''; Ch = 0'"; Ch = 0'|; Ch = 0'|; Ch = 0'\; Ch = 0'=, Ch = 0'+, Ch = 0',.
-
 not_brace(Ch) :-
   Ch =\= 0'{, Ch =\= 0'}.
 not_quote(Ch) :-
   Ch =\= 0'".
-
 
 % TODO : Collapse all the three into a single function
 digits(N) --> digits(0, N).
@@ -75,46 +71,43 @@ wordanum(L0, L) -->
   {L1 = [Char|L0] },
   (wordanum(L1, L) ; {reverse(L1, L) }).
 
-
-spaces1 --> (" ";"\n";"\t"), spaces.
-spaces --> (spaces1 ; "").
-
-not_braces(L) --> not_braces([], L).
-not_braces(L0, L) -->
-  [Char], { not_brace(Char) },
-  {L1 = [Char|L0] },
-  (not_braces(L1, L) ; {reverse(L1, L)}).
+% Just consume spaces
+s1_ --> (" ";"\n";"\t"), s_.
+s_ --> (s1_ ; "").
 
 % ============================================================
-%parsetxt(Txt) :- phrase(bib(Entry), Txt), write(Entry), nl.
 
 parse_txt([]).
-parse_txt(Txt) :- phrase(bibs(Bibs), Txt).
-    %, write(Bib). %, put_all(Bib).
+parse_txt(Txt) :- phrase(bibs(Bibs), Txt), write(Bibs).
 
-bibs([Bib | Bibs]) --> spaces, bib(Bib), spaces, bibs(Bibs).
+bibs([Bib | Bibs]) --> s_, bib(Bib), s_, bibs(Bibs).
 bibs([]) --> [].
 
-bib(Bib) -->
-  "@", bib_type(Bib),
-  "{", spaces, bib_name(Name), spaces, ",", spaces,
-  bib_keys(Keys), spaces, "}", spaces.
+bib(Bib) --> ( bib_comment(Bib) ; bib_string(Bib) ; bib_entry(Bib) ).
+
+bib_entry(bib(Type, Name, Keys)) -->
+  "@", bib_type(Type),
+  "{", s_, bib_name(Name), s_, ",", s_, bib_keys(Keys), s_, "}", s_.
+
+bib_comment(bib(comment,comment, [kv('key', Val)])) -->
+  ("@Comment" ; "@comment"), bib_braces(Val), s_.
+
+bib_string(bib(string, string, Keys)) -->
+  ("@String" ; "@string"), "{", s_, bib_keys(Keys), s_, "}", s_.
+
 bib_type(Type) -->
-  wordanum(TypeC), {atom_codes(Type, TypeC),
-  write('Type : '), write(Type), nl}.
+  wordanum(TypeC), {atom_codes(Type, TypeC)}.
+
 bib_name(Name) -->
-  wordanum(NameC), {atom_codes(Name, NameC),
-  write('Name : '), write(Name), nl}.
-bib_keys(KVP) -->
-  ((bib_kv(KVP), spaces) -> bib_keys(Rest) ; "").
-bib_kv(Key) -->
-  bib_key(Key), spaces, "=", spaces, bib_value(Val), spaces, ("," ; ""),
-  {write('KV : '), write(Key), write('='), write(Val), nl}.
+  wordanum(NameC), {atom_codes(Name, NameC)}.
+bib_keys([Pair | Rest]) --> bib_kv(Pair), s_, bib_keys(Rest).
+bib_keys([]) --> [].
+
+bib_kv(kv(Key,Val)) -->
+  bib_key(Key), s_, "=", s_, bib_value(Val), s_, ("," ; "").
 
 bib_key(Key) --> wordanum(KeyC), {atom_codes(Key, KeyC)}.
 bib_value(Val) --> (bib_word(Val) ; bib_braces(Val); bib_quotes(Val)).
-
-% TODO : not_braces to be replaced with nested braces
 
 bib_word(Val) --> wordanum(ValC), {atom_codes(Val, ValC)}.
 bib_braces(Val) --> parse_brace(ValC), {atom_codes(Val, ValC)}.
