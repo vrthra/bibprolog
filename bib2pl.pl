@@ -1,13 +1,13 @@
+:- dynamic([bib/3]).
 :- initialization(main).
 
 main :-
   argument_value(1, File),
-  start(File).
-
-start(File) :-
   read_txt(File, Txt),
   parse_txt(Txt),
-  nl, halt.
+  %findall(kv(Key,Value), bib(string,Key,Value), Kvl),
+  %write(Kvl),
+  nl. % halt.
 
 read_txt(FName, Txt) :-
   open(FName, read, File),
@@ -33,7 +33,7 @@ isdigit(Ch) :-
 ispunct(Ch) :-
   Ch >= 0'!, Ch =< 0'@ -> true ; Ch >= 0'{, Ch =< 0'~ -> true.
 islchar(Ch) :-
-  Ch = 0'_; Ch = 0'. ; Ch = 0'-; Ch = 0'+ .
+  Ch = 0'_ ; Ch = 0'. ; Ch = 0'- ; Ch = 0'+ .
 
 not_brace(Ch) :-
   Ch =\= 0'{, Ch =\= 0'}.
@@ -55,25 +55,25 @@ letters(L0, L) -->
 
 alphanum(L) --> alphanum([], L).
 alphanum(L0, L) --> 
-  [Char], {isalpha(Char); isdigit(Char)},
+  [Char], {isalpha(Char) ; isdigit(Char)},
   {L1 = [Char|L0] },
   (alphanum(L1, L) ; {reverse(L1, L) }).
 
 punctanum(L) --> punctanum([], L).
 punctanum(L0, L) --> 
-  [Char], {isalpha(Char); isdigit(Char); ispunct(Char)},
+  [Char], {isalpha(Char) ; isdigit(Char) ; ispunct(Char)},
   {L1 = [Char|L0] },
   (punctanum(L1, L) ; {reverse(L1, L) }).
 
 wordanum(L) --> wordanum([], L).
 wordanum(L0, L) --> 
-  [Char], {isalpha(Char); isdigit(Char); islchar(Char)},
+  [Char], {isalpha(Char) ; isdigit(Char) ; islchar(Char)},
   {L1 = [Char|L0] },
   (wordanum(L1, L) ; {reverse(L1, L) }).
 
 % Just consume spaces
-s1_ --> (" ";"\n";"\t"), s_.
-s_ --> (s1_ ; "").
+s1_ --> (" ";"\n" ; "\t"), s_.
+s_ --> s1_ ; "".
 
 % ============================================================
 
@@ -83,16 +83,16 @@ i_([])     --> [].
 i_([C|Cs]) --> any_case(C), i_(Cs).
 
 parse_txt([]).
-parse_txt(Txt) :- phrase(bibs(Bibs), Txt), write(Bibs).
+parse_txt(Txt) :- phrase(bibs(Bibs), Txt). %, write(Bibs).
 
 bibs([Bib | Bibs]) --> s_, bib(Bib), s_, bibs(Bibs).
 bibs([]) --> [].
 
-bib(Bib) --> ( bib_comment(Bib) ; bib_preamble(Bib) ; bib_string(Bib) ; bib_entry(Bib) ).
+bib(Bib) --> ( bib_comment(Bib) ; bib_preamble(Bib) ; bib_string(Bib) ; bib_entry(Bib) ), {asserta(Bib)}.
 
 bib_entry(bib(Type, Name, Keys)) -->
   "@", bib_type(Type),
-  "{", s_, bib_name(Name), s_, ",", s_, bib_keys(Keys), s_, "}", s_.
+  "{", s_, bib_name(Name), s_, ",", {!}, s_, bib_keys(Keys), s_, "}", s_.
 
 bib_comment(bib(comment,comment, [kv('key', Val)])) -->
   "@", i_("comment"), bib_braces(Val), s_.
@@ -100,10 +100,9 @@ bib_comment(bib(comment,comment, [kv('key', Val)])) -->
 bib_preamble(bib(preamble,preamble, [kv('key', Val)])) -->
   "@", i_("preamble"), bib_braces(Val), s_.
 
-bib_string(bib(string, string, Keys)) -->
-  "@", i_("string"), "{", s_, bib_keys(Keys), s_, "}", s_.
-bib_string(bib(string, string, Keys)) -->
-  "@", i_("string"), "(", s_, bib_keys(Keys), s_, ")", s_.
+bib_string(bib(string, K, [V])) -->
+  "@", i_("string"),
+  ("{", s_, bib_keys([kv(K,V)]), s_, "}" ; "{", s_, bib_keys([kv(K,V)]), s_, "}"), s_.
 
 bib_type(Type) -->
   wordanum(TypeC), {atom_codes(Type, TypeC)}.
@@ -114,11 +113,13 @@ bib_keys([Pair | Rest]) --> bib_kv(Pair), s_, bib_keys(Rest).
 bib_keys([]) --> [].
 
 bib_kv(kv(Key,Val)) -->
-  bib_key(Key), s_, "=", s_, bib_value(Val), s_, ("," ; "").
+  bib_key(Key), s_, "=", s_, bib_value(Val), s_, ((",",{!}) ; "").
+  % we have a !cut here so that once a pair is parsed, we should not go back
+  % there are no possible circumstances in bibtex which would require it.
 
 bib_key(Key) --> wordanum(KeyC), {atom_codes(Key, KeyC)}.
 
-bib_value(Val) -->(bib_word(V1); bib_braces(V1); bib_quotes(Val)),
+bib_value(Val) -->(bib_braces(V1) ; bib_quotes(V1) ; bib_word(V1) ),
   s_, "#", s_, bib_value(V2), {[V1,V2] = Val}.
 bib_value(Val) --> bib_word(Val).
 bib_value(Val) --> bib_braces(Val).
@@ -138,7 +139,7 @@ parse_bstring([]) --> [].
 
 parse_quote(Val) --> "\"", parse_qstring(ValS), "\"", {append( [0'"| ValS], "\"", Val)}.
 
-parse_qstring([0'\\| [Char|Val]] ) --> "\\", [Char], parse_qstring(Val).
+parse_qstring([0'\\| [Char|Val]] ) --> "\\", [Char], parse_qstring(Val). %{write('Warning escaped Quote'), nl}.
 parse_qstring(Val) --> parse_brace(V), parse_qstring(U), {append(V, U, Val)}.
 parse_qstring([Char|Val]) --> [Char], {not_quote(Char)}, parse_qstring(Val).
 parse_qstring([]) --> [].
