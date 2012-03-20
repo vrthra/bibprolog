@@ -139,6 +139,7 @@ parse_bstring([]) --> [].
 parse_quote(Val) --> "\"", parse_qstring(ValS), "\"", {append( [0'"| ValS], "\"", Val)}.
 
 parse_qstring([0'\\| [Char|Val]] ) --> "\\", [Char], parse_qstring(Val).
+parse_qstring(Val) --> parse_brace(V), parse_qstring(U), {append(V, U, Val)}.
 parse_qstring([Char|Val]) --> [Char], {not_quote(Char)}, parse_qstring(Val).
 parse_qstring([]) --> [].
 
