@@ -77,6 +77,11 @@ s_ --> (s1_ ; "").
 
 % ============================================================
 
+any_case(XX) --> [X], { char_code(C, X), lower_upper(CC, C), char_code(CC, XX)}. 
+
+i_([])     --> []. 
+i_([C|Cs]) --> any_case(C), i_(Cs).
+
 parse_txt([]).
 parse_txt(Txt) :- phrase(bibs(Bibs), Txt), write(Bibs).
 
@@ -90,15 +95,15 @@ bib_entry(bib(Type, Name, Keys)) -->
   "{", s_, bib_name(Name), s_, ",", s_, bib_keys(Keys), s_, "}", s_.
 
 bib_comment(bib(comment,comment, [kv('key', Val)])) -->
-  ("@Comment" ; "@comment"), bib_braces(Val), s_.
+  "@", i_("comment"), bib_braces(Val), s_.
 
 bib_preamble(bib(preamble,preamble, [kv('key', Val)])) -->
-  ("@Preamble" ; "@preamble"), bib_braces(Val), s_.
+  "@", i_("preamble"), bib_braces(Val), s_.
 
 bib_string(bib(string, string, Keys)) -->
-  ("@String" ; "@string"), "{", s_, bib_keys(Keys), s_, "}", s_.
+  "@", i_("string"), "{", s_, bib_keys(Keys), s_, "}", s_.
 bib_string(bib(string, string, Keys)) -->
-  ("@String" ; "@string"), "(", s_, bib_keys(Keys), s_, ")", s_.
+  "@", i_("string"), "(", s_, bib_keys(Keys), s_, ")", s_.
 
 bib_type(Type) -->
   wordanum(TypeC), {atom_codes(Type, TypeC)}.
