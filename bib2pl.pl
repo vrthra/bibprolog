@@ -1,4 +1,4 @@
-:- dynamic([bib/3]).
+:- dynamic([bibentry/3]).
 :- initialization(main).
 
 main :-
@@ -11,6 +11,8 @@ main :-
   write('\t bibentry(type, name, [i(Key, Value) ... ])'), nl,
   write('e.g: '), nl,
   write('\t bibentry(article, chaitin, [i(title, {The Halting Probability}) ... ])'), nl,
+  write('query:'),nl,
+  write('has(year,\'2004\').'),
   nl.
 
 process([bibentry(Type, Key, Value)|Xs]) :- 
@@ -19,6 +21,25 @@ process([]).
 
 process_entry(T, K, V):- 
   write(T), write(' '), write(K), nl.
+
+awrite([L|Ls]) :- write(L), nl, awrite(Ls).
+awrite([]).
+
+has(K,V) :- bibentry(Type,Key,Entries), contains(K,V, Entries),
+  bwrite(bibentry(Type,Key,Entries)).
+
+bwrite(bibentry(Type,Key,Entries)):-
+  write(Type), write(' '), write(Key), nl,
+  eswrite(Entries), nl.
+
+eswrite([E|Es]):- ewrite(E), nl, eswrite(Es).
+eswrite([]).
+
+ewrite(i(K,V)):-
+  write('| '),write(K), write(':\t'), write(V).
+
+contains(K,V, [i(K,V)|Entries]).
+contains(K,V, [Kv|Entries]) :- contains(K, V, Entries).
 
 
 % address: Publisher's address (usually just the city, but can be the full address for lesser-known publishers)
@@ -214,7 +235,7 @@ bib_kv(i(Key,Val)) -->
 bib_key(Key) --> wordanum(KeyC), {atom_codes(Key, KeyC)}.
 
 bib_value(Val) -->(bib_braces(V1) ; bib_quotes(V1) ; bib_word(V1) ),
-  s_, "#", s_, bib_value(V2), {[V1,V2] = Val}.
+  s_, "#", s_, bib_value(V2), {[V1,V2] = Val}. % TODO, fetch from string db
 bib_value(Val) --> bib_word(Val).
 bib_value(Val) --> bib_braces(Val).
 bib_value(Val) --> bib_quotes(Val).
@@ -224,14 +245,16 @@ bib_braces(Val) --> parse_brace(ValC), {atom_codes(Val, ValC)}.
 bib_quotes(Val) --> parse_quote(ValC), {atom_codes(Val, ValC)}.
 
 
-parse_brace(Val) --> "{", parse_bstring(ValS), "}", {append( [0'{| ValS], "}", Val)}.
+%parse_brace(Val) --> "{", parse_bstring(ValS), "}", {append( [0'{| ValS], "}", Val)}.
+parse_brace(Val) --> "{", parse_bstring(Val), "}".
 
 parse_bstring([0'\\| [Char|Val]] ) --> "\\", [Char], parse_bstring(Val).
 parse_bstring([Char|Val]) --> [Char], {not_brace(Char)}, parse_bstring(Val).
 parse_bstring(Val) --> parse_brace(ValA), parse_bstring(ValB), {append(ValA, ValB, Val)}.
 parse_bstring([]) --> [].
 
-parse_quote(Val) --> "\"", parse_qstring(ValS), "\"", {append( [0'"| ValS], "\"", Val)}.
+%parse_quote(Val) --> "\"", parse_qstring(ValS), "\"", {append( [0'"| ValS], "\"", Val)}.
+parse_quote(Val) --> "\"", parse_qstring(Val), "\"".
 
 parse_qstring([0'\\| [Char|Val]] ) --> "\\", [Char], parse_qstring(Val). %{write('Warning escaped Quote'), nl}.
 parse_qstring(Val) --> parse_brace(V), parse_qstring(U), {append(V, U, Val)}.
