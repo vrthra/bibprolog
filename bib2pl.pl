@@ -12,7 +12,7 @@ main :-
   write('e.g: '), nl,
   write('\t bibentry(article, chaitin, [i(title, {The Halting Probability}) ... ])'), nl,
   write('query:'),nl,
-  write('has(year,\'2004\').'),
+  write('\thas(year,\'2004\').'),
   nl.
 
 process([bibentry(Type, Key, Value)|Xs]) :- 
