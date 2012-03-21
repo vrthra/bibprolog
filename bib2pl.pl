@@ -12,7 +12,8 @@ main :-
   write('e.g: '), nl,
   write('\t bibentry(article, chaitin, [i(title, {The Halting Probability}) ... ])'), nl,
   write('query:'),nl,
-  write('\thas(year,\'2004\').'),
+  write('\thas(year,\'2004\').'),nl,
+  write('\t(i(year, \'2004\', B); i(year, \'2000\',B)), print(B).'),
   nl.
 
 process([bibentry(Type, Key, Value)|Xs]) :- 
@@ -25,7 +26,13 @@ process_entry(T, K, V):-
 awrite([L|Ls]) :- write(L), nl, awrite(Ls).
 awrite([]).
 
-has(K,V) :- bibentry(Type,Key,Entries), contains(K,V, Entries),
+i(K,V, bibentry(Type, Key, Entries)):-
+  bibentry(Type, Key, Entries),
+  member(i(K,V), Entries).
+
+portray(bibentry(Type, Key, Entries)):- bwrite(bibentry(Type, Key, Entries)).
+
+has(K,V) :- bibentry(Type,Key,Entries), member(i(K,V), Entries),
   bwrite(bibentry(Type,Key,Entries)).
 
 bwrite(bibentry(Type,Key,Entries)):-
@@ -37,10 +44,6 @@ eswrite([]).
 
 ewrite(i(K,V)):-
   write('| '),write(K), write(':\t'), write(V).
-
-contains(K,V, [i(K,V)|Entries]).
-contains(K,V, [Kv|Entries]) :- contains(K, V, Entries).
-
 
 % address: Publisher's address (usually just the city, but can be the full address for lesser-known publishers)
 % annote: An annotation for annotated bibliography styles (not typical)
