@@ -184,13 +184,13 @@ bib_entry(bibentry(Type, Name, Keys)) -->
   "@", bib_type(Type),
   "{", s_, bib_name(Name), s_, ",", {!}, s_, bib_keys(Keys), s_, "}", s_.
 
-bib_comment(bib(comment,comment, [i('key', Val)])) -->
+bib_comment(bibentry(comment,comment, [i('key', Val)])) -->
   "@", i_("comment"), bib_braces(Val), s_.
 
-bib_preamble(bib(preamble,preamble, [i('key', Val)])) -->
+bib_preamble(bibentry(preamble,preamble, [i('key', Val)])) -->
   "@", i_("preamble"), bib_braces(Val), s_.
 
-bib_string(bib(string, K, [V])) -->
+bib_string(bibentry(string, K, [V])) -->
   "@", i_("string"),
   ("{", s_, bib_keys([i(K,V)]), s_, "}" ; "{", s_, bib_keys([i(K,V)]), s_, "}"), s_.
 
@@ -209,7 +209,7 @@ bib_kv(i(Key,Val)) -->
 
 bib_key(Key) --> wordanum(KeyC), {atom_codes(Key, KeyC)}.
 
-bib_value(Val) -->(bib_braces(V1) ; bib_quotes(V1) ; bib_word(V1) ),
+bib_value(Val) -->(bib_braces(V1) ; bib_quotes(V1) ; bib_word(V1)),
   s_, "#", s_, bib_value(V2), {[V1,V2] = Val}. % TODO, fetch from string db
 bib_value(Val) --> bib_word(Val).
 bib_value(Val) --> bib_braces(Val).
@@ -335,7 +335,7 @@ eswrite([E|Es]):- ewrite(E), nl, eswrite(Es).
 eswrite([]).
 
 ewrite(i(K,V)):-
-  write('  '),format('~15a', [K]), c_blue(':'), write(V).
+  write('  '),format('~15a', [K]), c_blue(': '), write(V).
 
 ulcaseatom(L, U) :-
   atom_chars(L, Ls), 
@@ -393,7 +393,6 @@ process_expr(or(E1,E2), Res) :-
 
 process_expr(and(E1,E2), Res) :-
   process_expr(E1, Res), process_expr(E2, Res).
-
 
 %--------------------------------------------------------
 % Standard Incantation for a REPL

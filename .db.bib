@@ -1,219 +1,34 @@
-@book{tilings,
-    author = {Gr\"{u}nbaum, Branko and Shephard, G C},
-    title = {Tilings and patterns},
-    year = {1986},
-    isbn = {0-716-71193-1},
-    publisher = {W. H. Freeman \& Co.},
-    address = {New York, NY, USA},
-} 
+@comment{ This is a comment }
+@Comment{ This is a comment }
+@COMMENT{ This is a comment }
+@String{ skey1="XXY"}
+@STRING{skey2 = "XXX"}
+@STRING{a = "A"}
+@STRING{cxyz = "CXYZ"}
+@STRING{abc = "ABC"}
+@STRING{def = "DEF"}
+@STRING{ghi = "GHI"}
+@STRING{value = "VALUE"}
+@STRING{value2 = "VALUE2"}
 
-@article{undecide,
-    author = {R. Berger},
-    title = {The undecidability of the domino problem},
-    year = {1966},
-    masid = {1312573}
+@article{name,
+    key = value,
+    key2 = value2,
+    key3 = { valuea, valueb },
+    key4 = {{A}, {A B {C}}},
+    key5 = {{A}, {A B \{C  \} }},
+    key6 = "A B C",
+    key7 = "A \" B C \\ {X Y} D",
+    key8 = "",
+    key9 = {},
+    key_10 = {},
+    key11 = a # abcxyz,
+    key12 = a # {a b cxyz},
+    key13 = a # "a b cxyz",
+    key14 = {a 1 2} # "a b cxyz",
+    key15 = {a 1 2} # cxyz,
+    key16 = abc # def # ghi,
+    key17 = "ab {"} cd "
 }
 
-@incollection{aperiodic,
-    author = {Culik, Karel and Kari, Jarkko},
-    affiliation = {University of South Carolina Depart. of Comp. Science 29208 Columbia S.C. 29208 Columbia S.C.},
-    title = {On aperiodic sets of Wang tiles},
-    booktitle = {Foundations of Computer Science},
-    series = {Lecture Notes in Computer Science},
-    editor = {Freksa, Christian and Jantzen, Matthias and Valk, Rüdiger},
-    publisher = {Springer Berlin / Heidelberg},
-    isbn = {},
-    pages = {153-162},
-    volume = {1337},
-    url = {http://dx.doi.org/10.1007/BFb0052084},
-    note = {10.1007/BFb0052084},
-    year = {1997}
-}
-
-@article{13tiles,
-    author = {Culik,II, Karel},
-    title = {An aperiodic set of 13 Wang tiles},
-    journal = {Discrete Math.},
-    volume = {160},
-    issue = {1-3},
-    month = {November},
-    year = {1996},
-    issn = {0012-365X},
-    pages = {245--251},
-    numpages = {7},
-    url = {http://portal.acm.org/citation.cfm?id=245761.245814},
-    doi = {10.1016/S0012-365X(96)00118-5},
-    acmid = {245814},
-    publisher = {Elsevier Science Publishers B. V.},
-    address = {Amsterdam, The Netherlands, The Netherlands},
-} 
-
-@article{tmtiles,
-    author = {Raphael M. Robinson},
-    title = {Undecidability and nonperiodicity for tilings of the plane},
-    journal = {Inventiones Mathematicae},
-    volume = {12},
-    year = {1971},
-    pages = {177--209},
-    doi = {10.1007/BF01418780},
-    masid = {1357503}
-}
-
-@article{wang,
-    author = {Wang, Hao},
-    title = {Proving theorems by pattern recognition I},
-    journal = {Commun. ACM},
-    issue_date = {April 1960},
-    volume = {3},
-    issue = {4},
-    month = {April},
-    year = {1960},
-    issn = {0001-0782},
-    pages = {220--234},
-    numpages = {15},
-    url = {http://doi.acm.org/10.1145/367177.367224},
-    doi = {http://doi.acm.org/10.1145/367177.367224},
-    acmid = {367224},
-    publisher = {ACM},
-    address = {New York, NY, USA},
-} 
-
-@incollection{culik,
-   author = {Culik, Karel and Kari, Jarkko},
-   affiliation = {University of South Carolina Depart. of Comp. Science 29208 Columbia S.C. 29208 Columbia S.C.},
-   title = {On aperiodic sets of Wang tiles},
-   booktitle = {Foundations of Computer Science},
-   series = {Lecture Notes in Computer Science},
-   editor = {Freksa, Christian and Jantzen, Matthias and Valk, Rüdiger},
-   publisher = {Springer Berlin / Heidelberg},
-   isbn = {},
-   pages = {153-162},
-   volume = {1337},
-   url = {http://dx.doi.org/10.1007/BFb0052084},
-   note = {10.1007/BFb0052084},
-   abstract = {},
-   year = {1997}
-}
-
-@article{penrose,
-    author = {Penrose, R.},
-    citeulike-article-id = {381549},
-    journal = {The Institute of Mathematics and its Applications Bulletin},
-    keywords = {fractals, tilings},
-    month = jul,
-    number = {7/8},
-    pages = {266--271},
-    posted-at = {2005-11-05 09:06:00},
-    priority = {0},
-    title = {{The R\^ole of Aesthetics in Pure and Applied Mathematical Research}},
-    volume = {10},
-    year = {1974}
-}
-
-@article{wolfram,
-    abstract = {{Cellular automata are discrete dynamical systems with simple construction but complex self-organizing behaviour. Evidence is presented that all one-dimensional cellular automata fall into four distinct universality classes. Characterizations of the structures generated in these classes are discussed. Three classes exhibit behaviour analogous to limit points, limit cycles and chaotic attractors. The fourth class is probably capable of universal computation, so that properties of its infinite time behaviour are undecidable.}},
-    author = {Wolfram, S.},
-    citeulike-article-id = {467992},
-    citeulike-linkout-0 = {http://dx.doi.org/10.1016/0167-2789(84)90245-8},
-    citeulike-linkout-1 = {http://linkinghub.elsevier.com/retrieve/pii/0167278984902458},
-    citeulike-linkout-2 = {http://www.sciencedirect.com/science/article/B6TVK-46JH274-70/2/09836b0a10bc9053feffc2e7916138a0},
-    doi = {10.1016/0167-2789(84)90245-8},
-    issn = {01672789},
-    journal = {Physica D: Nonlinear Phenomena},
-    keywords = {cellular\_automata, complexity, computation, universality},
-    month = jan,
-    number = {1-2},
-    pages = {1--35},
-    posted-at = {2009-04-23 10:28:58},
-    priority = {2},
-    title = {{Universality and complexity in cellular automata}},
-    url = {http://dx.doi.org/10.1016/0167-2789(84)90245-8},
-    volume = {10},
-    year = {1984}
-}
-
-@article{cook,
-    abstract = {{The purpose of this paper is to prove a conjecture made by Stephen Wolfram in 1985, that an elementary one dimensional cellular automaton known as ``Rule 110'' is capable of universal computation. I developed this proof of his conjecture while assisting Stephen Wolfram on research for A New Kind of Science.}},
-    author = {Cook, Matthew},
-    citeulike-article-id = {8904618},
-    journal = {Complex Systems},
-    keywords = {cellular-automata, models-of-computation},
-    local-url = {file://localhost/Users/cook/Common/Reading/IndexedPapers/Cook04c.pdf},
-    number = {1},
-    pages = {1--40},
-    posted-at = {2011-02-28 21:51:37},
-    priority = {0},
-    title = {{Universality in Elementary Cellular Automata}},
-    volume = {15},
-    year = {2004}
-}
-@article{texture,
-    author = {Cohen, Michael F. and Shade, Jonathan and Hiller, Stefan and Deussen, Oliver},
-    title = {Wang Tiles for image and texture generation},
-    journal = {ACM Trans. Graph.},
-    volume = {22},
-    issue = {3},
-    month = {July},
-    year = {2003},
-    issn = {0730-0301},
-    pages = {287--294},
-    numpages = {8},
-    url = {http://doi.acm.org/10.1145/882262.882265},
-    doi = {http://doi.acm.org/10.1145/882262.882265},
-    acmid = {882265},
-    publisher = {ACM},
-    address = {New York, NY, USA},
-    keywords = {Poisson distributions, Wang Tiles, non-periodic tiling, texture synthesis},
-} 
-
-@inproceedings{assembly,
-    author = {Matthew Cook and Paul W. K. Rothemund and Erik Winfree},
-    title = {Self-assembled circuit patterns},
-    booktitle = {In DNA Computing 9},
-    year = {2004},
-    pages = {91--107},
-    publisher = {SpringerVerlag}
-}
-
-@article{dna,
-    author = {Chengde Mao and Thomas H. Labean and John H. Reif and Nadrian C. Seeman},
-    title = {Logical computation using algorithmic self-assembly of dna triple-crossover molecules},
-    journal = {Nature},
-    year = {2000},
-    volume = {407},
-    pages = {493--496}
-}
-
-@inproceedings{cubes,
-    author = {Sibley, Peter G. and Montgomery, Philip and Marai, G. Elisabeta},
-    title = {Wang cubes for video synthesis and geometry placement},
-    booktitle = {ACM SIGGRAPH 2004 Posters},
-    series = {SIGGRAPH '04},
-    year = {2004},
-    isbn = {1-58113-896-2},
-    location = {Los Angeles, California},
-    pages = {20--},
-    url = {http://doi.acm.org/10.1145/1186415.1186439},
-    doi = {http://doi.acm.org/10.1145/1186415.1186439},
-    acmid = {1186439},
-    publisher = {ACM},
-    address = {New York, NY, USA},
-} 
-
-@article{chaitin,
-    author = {Chaitin, Gregory},
-    title = {The Halting Probability via Wang Tiles},
-    journal = {Fundam. Inf.},
-    volume = {86},
-    issue = {4},
-    month = {December},
-    year = {2008},
-    issn = {0169-2968},
-    pages = {429--433},
-    numpages = {5},
-    url = {http://portal.acm.org/citation.cfm?id=1487705.1487708},
-    acmid = {1487708},
-    publisher = {IOS Press},
-    address = {Amsterdam, The Netherlands, The Netherlands},
-} 
 
