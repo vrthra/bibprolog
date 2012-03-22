@@ -279,10 +279,17 @@ kv_to_atom(KeyC, ValueC, Key, Value):- atom_codes(Key, KeyC), atom_codes(Value, 
 parse_line(Line, Cmd) :- 
   phrase(read_command(Cmd), Line) ; Cmd = unknown.
 
-read_kv(pair(Key, Value)) --> read_kvc(v(Key, Value, ":")).
+read_kv(pair(Key, Value)) --> 
+  alphanum(KeyC), s_, ":", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
+
+read_kv(pair(Key, Value)) --> 
+  alphanum(KeyC), s_, ":", s_, {kv_to_atom(KeyC, "", Key, Value)}.
 
 read_kv(has(Key, Value)) -->
   alphanum(KeyC), s_, "~", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
+
+read_kv(has(Key, Value)) --> 
+  alphanum(KeyC), s_, "~", s_, {kv_to_atom(KeyC, "", Key, Value)}.
 
 read_kv(ne(Key, Value)) -->
   alphanum(KeyC), s_, "!", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
@@ -298,9 +305,6 @@ read_kv(ge(Key, Value)) -->
 
 read_kv(le(Key, Value)) -->
   alphanum(KeyC), s_, "<=", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
-
-read_kvc(v(Key, Value, C)) -->
-  alphanum(KeyC), s_, ":", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
 
 
 read_command(exit) --> "exit".
