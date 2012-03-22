@@ -184,13 +184,13 @@ bib_entry(bibentry(Type, Name, Keys)) -->
   "@", bib_type(Type),
   "{", s_, bib_name(Name), s_, ",", {!}, s_, bib_keys(Keys), s_, "}", s_.
 
-bib_comment(bibentry(comment,comment, [i('key', Val)])) -->
+bib_comment(bibentry(comment,comment, Val)) -->
   "@", i_("comment"), bib_braces(Val), s_.
 
-bib_preamble(bibentry(preamble,preamble, [i('key', Val)])) -->
+bib_preamble(bibentry(preamble,preamble, Val)) -->
   "@", i_("preamble"), bib_braces(Val), s_.
 
-bib_string(bibentry(string, K, [V])) -->
+bib_string(bibentry(string, K, V)) -->
   "@", i_("string"),
   ("{", s_, bib_keys([i(K,V)]), s_, "}" ; "{", s_, bib_keys([i(K,V)]), s_, "}"), s_.
 
@@ -318,10 +318,12 @@ read_command(and(P1, P2)) -->
 
 read_command(P) --> s_, read_expr(P), s_.
 
+
 read_command(no) --> [].
 
 read_expr(Pair) --> read_kv(Pair).
 read_expr(E) --> "(", read_command(E), ")".
+read_expr(all(V)) --> s_, "*", alphanum(VC), s_, {atom_codes(V,VC)}.
 
 
 %--------------------------------------------------------
@@ -330,6 +332,15 @@ read_expr(E) --> "(", read_command(E), ")".
 awrite([L|Ls]) :- print(L), nl, awrite(Ls).
 awrite([]).
 portray(bibentry(Type, Key, Entries)):- bwrite(bibentry(Type, Key, Entries)).
+
+bwrite(bibentry(comment,Key,Entries)):-
+  c_blue(comment), write(' '), print(Entries), nl.
+
+bwrite(bibentry(preamble,Key,Entries)):-
+  c_blue(preamble), write(' '), print(Entries), nl.
+
+bwrite(bibentry(string,Key,Entries)):-
+  c_blue(string), write(' '), c_yellow(Key), write(' '), print(Entries), nl.
 
 bwrite(bibentry(Type,Key,Entries)):-
   c_blue(Type), write(' '), c_yellow(Key), nl,
@@ -366,6 +377,10 @@ process_cmd(unknown) :-
 process_cmd(E) :-
   setof(Res, process_expr(E, Res), ResL),
   awrite(ResL), nl.
+
+process_expr(all(V), Res) :-
+  bibentry(V,Key,R),
+  Res = bibentry(V, Key, R).
 
 process_expr(pair(K,V), Res) :- 
   i(K,V, Res).
