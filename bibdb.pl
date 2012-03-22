@@ -360,7 +360,7 @@ process_cmd(unknown) :-
   write('*'), nl.
 
 process_cmd(E) :-
-  bagof(Res, process_expr(E, Res), ResL),
+  setof(Res, process_expr(E, Res), ResL),
   awrite(ResL), nl.
 
 process_expr(pair(K,V), Res) :- 
