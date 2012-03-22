@@ -1,27 +1,9 @@
-%#!/usr/bin/gprolog
+%#!/usr/bin/prolog
 % --------------------------------------------
 % CLI for interacting with a bibtex db.
 % Enter your bibtex file to .bib.db
 % i.e cat wang.bib > .bib.db
 % --------------------------------------------
-awrite([L|Ls]) :- print(L), nl, awrite(Ls).
-awrite([]).
-
-i(K,V, bibentry(Type, Key, Entries)):-
-  bibentry(Type, Key, Entries),
-  member(i(K,V), Entries).
-
-portray(bibentry(Type, Key, Entries)):- bwrite(bibentry(Type, Key, Entries)).
-
-bwrite(bibentry(Type,Key,Entries)):-
-  c_blue(Type), write(' '), c_yellow(Key), nl,
-  eswrite(Entries), nl.
-
-eswrite([E|Es]):- ewrite(E), nl, eswrite(Es).
-eswrite([]).
-
-ewrite(i(K,V)):-
-  write('  '),format('~15a', [K]), c_blue(':'), write(V).
 
 % address: Publisher's address (usually just the city, but can be the full address for lesser-known publishers)
 % annote: An annotation for annotated bibliography styles (not typical)
@@ -105,6 +87,25 @@ ewrite(i(K,V)):-
 %   Required fields: author, title, note
 %   Optional fields: month, year, key
 
+awrite([L|Ls]) :- print(L), nl, awrite(Ls).
+awrite([]).
+
+i(K,V, bibentry(Type, Key, Entries)):-
+  bibentry(Type, Key, Entries),
+  member(i(K,V), Entries).
+
+portray(bibentry(Type, Key, Entries)):- bwrite(bibentry(Type, Key, Entries)).
+
+bwrite(bibentry(Type,Key,Entries)):-
+  c_blue(Type), write(' '), c_yellow(Key), nl,
+  eswrite(Entries), nl.
+
+eswrite([E|Es]):- ewrite(E), nl, eswrite(Es).
+eswrite([]).
+
+ewrite(i(K,V)):-
+  write('  '),format('~15a', [K]), c_blue(':'), write(V).
+
 read_txt(FName, Txt) :-
   open(FName, read, File),
   read_file(File, Txt),
@@ -120,6 +121,17 @@ read_file(Stream, [X|L]) :-
   \+ at_end_of_stream(Stream),
   get_code(Stream, X),
   read_file(Stream, L).
+
+ulcaseatom(L, U) :-
+  atom_chars(L, Ls), 
+  ulcase(Ls, Us),
+  atom_chars(U, Us). % !!!! this is dependent on sequence.
+
+%char_code(C, 0'a), lower_upper(C,A).
+ulcase([L|Ls], [U|Us]) :-
+  lower_upper(L, U),
+  ulcase(Ls, Us).
+ulcase([], []).
 
 % ============================================================
 isalpha(Ch) :-
@@ -185,12 +197,15 @@ i_([])     --> [].
 i_([C|Cs]) --> any_case(C), i_(Cs).
 
 parse_txt([]).
-parse_txt(Txt) :- phrase(bibs(Bibs), Txt).
+parse_txt(Txt) :- phrase(bibs(Bibs), Txt), apply(Bibs).
+
+apply([Bib|Bibs]) :- asserta(Bib), apply(Bibs).
+apply([]).
 
 bibs([Bib | Bibs]) --> s_, bib(Bib), s_, bibs(Bibs).
 bibs([]) --> [].
 
-bib(Bib) --> ( bib_comment(Bib) ; bib_preamble(Bib) ; bib_string(Bib) ; bib_entry(Bib) ), {asserta(Bib)}.
+bib(Bib) --> ( bib_comment(Bib) ; bib_preamble(Bib) ; bib_string(Bib) ; bib_entry(Bib) ).
 
 bib_entry(bibentry(Type, Name, Keys)) -->
   "@", bib_type(Type),
@@ -293,6 +308,25 @@ parse_line(Line, Cmd) :-
 read_kv(pair(Key, Value)) -->
   alphanum(KeyC), s_, ":", s_, alphanum(ValueC), {atom_codes(Key, KeyC), atom_codes(Value, ValueC)}.
 
+read_kv(has(Key, Value)) -->
+  alphanum(KeyC), s_, "~", s_, alphanum(ValueC), {atom_codes(Key, KeyC), atom_codes(Value, ValueC)}.
+
+read_kv(ne(Key, Value)) -->
+  alphanum(KeyC), s_, "!", s_, alphanum(ValueC), {atom_codes(Key, KeyC), atom_codes(Value, ValueC)}.
+
+read_kv(gt(Key, Value)) -->
+  alphanum(KeyC), s_, ">", s_, alphanum(ValueC), {atom_codes(Key, KeyC), atom_codes(Value, ValueC)}.
+
+read_kv(lt(Key, Value)) -->
+  alphanum(KeyC), s_, "<", s_, alphanum(ValueC), {atom_codes(Key, KeyC), atom_codes(Value, ValueC)}.
+
+read_kv(ge(Key, Value)) -->
+  alphanum(KeyC), s_, ">=", s_, alphanum(ValueC), {atom_codes(Key, KeyC), atom_codes(Value, ValueC)}.
+
+read_kv(le(Key, Value)) -->
+  alphanum(KeyC), s_, "<=", s_, alphanum(ValueC), {atom_codes(Key, KeyC), atom_codes(Value, ValueC)}.
+
+
 read_command(exit) --> "exit".
 read_command(no) --> s_.
 
@@ -322,6 +356,46 @@ process_cmd(E) :-
 process_expr(pair(K,V), Res) :- 
   i(K,V, Res).
 
+process_expr(gt(K,V), Res) :- 
+  atom_codes(V, V1),
+  phrase(digits(N), V1),
+  i(K,Vi, Res),
+  atom_codes(Vi, Vi1),
+  phrase(digits(N1), Vi1),
+  N1 #># N, fd_domain([N,N1],1,10000).
+
+process_expr(lt(K,V), Res) :- 
+  atom_codes(V, V1),
+  phrase(digits(N), V1),
+  i(K,Vi, Res),
+  atom_codes(Vi, Vi1),
+  phrase(digits(N1), Vi1),
+  N1 #<# N, fd_domain([N,N1],1,10000).
+
+process_expr(ge(K,V), Res) :- 
+  atom_codes(V, V1),
+  phrase(digits(N), V1),
+  i(K,Vi, Res),
+  atom_codes(Vi, Vi1),
+  phrase(digits(N1), Vi1),
+  N1 #>=# N, fd_domain([N,N1],1,10000).
+
+process_expr(le(K,V), Res) :- 
+  atom_codes(V, V1),
+  phrase(digits(N), V1),
+  i(K,Vi, Res),
+  atom_codes(Vi, Vi1),
+  phrase(digits(N1), Vi1),
+  N1 #=<# N, fd_domain([N,N1],1,10000).
+
+
+process_expr(ne(K,V), Res) :- 
+  i(K,V1, Res), V \= V1.
+
+
+process_expr(has(K,V), Res) :- 
+  i(K,V1, Res), ulcaseatom(V1, V2), ulcaseatom(V, Vi), sub_atom(V2, _, _, _, Vi).
+
 process_expr(or(E1,E2), Res) :-
   process_expr(E1, Res) ; process_expr(E2, Res).
 
@@ -337,7 +411,7 @@ do_command :-
   write('bib> '),
   read_line(Line),!,
   parse_line(Line, Cmd),
-  ( Cmd = exit, halt ;
+  ( Cmd = exit; %halt ;
     Cmd = no, do_command ;
     process_cmd(Cmd),
     do_command
