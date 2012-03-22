@@ -1,29 +1,10 @@
-:- dynamic([bibentry/3]).
-:- initialization(main).
-
-main :-
-  argument_value(1, File),
-  read_txt(File, Txt),
-  parse_txt(Txt),
-  findall(bibentry(Type,Key,Value), bibentry(Type,Key,Value), Kvl),
-  process(Kvl),nl,
-  write('format: '), nl,
-  write('\t bibentry(type, name, [i(Key, Value) ... ])'), nl,
-  write('e.g: '), nl,
-  write('\t bibentry(article, chaitin, [i(title, {The Halting Probability}) ... ])'), nl,
-  write('query:'),nl,
-  write('\thas(year,\'2004\').'),nl,
-  write('\t(i(year, \'2004\', B); i(year, \'2000\',B)), print(B).'),
-  nl.
-
-process([bibentry(Type, Key, Value)|Xs]) :- 
-  process_entry(Type, Key, Value), process(Xs).
-process([]).
-
-process_entry(T, K, V):- 
-  write(T), write(' '), write(K), nl.
-
-awrite([L|Ls]) :- write(L), nl, awrite(Ls).
+%#!/usr/bin/gprolog
+% --------------------------------------------
+% CLI for interacting with a bibtex db.
+% Enter your bibtex file to .bib.db
+% i.e cat wang.bib > .bib.db
+% --------------------------------------------
+awrite([L|Ls]) :- print(L), nl, awrite(Ls).
 awrite([]).
 
 i(K,V, bibentry(Type, Key, Entries)):-
@@ -32,18 +13,15 @@ i(K,V, bibentry(Type, Key, Entries)):-
 
 portray(bibentry(Type, Key, Entries)):- bwrite(bibentry(Type, Key, Entries)).
 
-has(K,V) :- bibentry(Type,Key,Entries), member(i(K,V), Entries),
-  bwrite(bibentry(Type,Key,Entries)).
-
 bwrite(bibentry(Type,Key,Entries)):-
-  write(Type), write(' '), write(Key), nl,
+  c_blue(Type), write(' '), c_yellow(Key), nl,
   eswrite(Entries), nl.
 
 eswrite([E|Es]):- ewrite(E), nl, eswrite(Es).
 eswrite([]).
 
 ewrite(i(K,V)):-
-  write('| '),write(K), write(':\t'), write(V).
+  write('  '),format('~15a', [K]), c_blue(':'), write(V).
 
 % address: Publisher's address (usually just the city, but can be the full address for lesser-known publishers)
 % annote: An annotation for annotated bibliography styles (not typical)
@@ -158,6 +136,12 @@ not_brace(Ch) :-
 not_quote(Ch) :-
   Ch =\= 0'".
 
+tilleol(L) --> tilleol([], L).
+tilleol(L0, L) -->
+  [Char], { Char =\= 13 ; Char =\= 10 },
+  { L1 = [Char|L0] },
+  (tilleol(L1, L) ; {reverse(L1, L)}).
+
 % TODO : Collapse all the three into a single function
 digits(N) --> digits(0, N).
 digits(N0, N) --> % N0 is number already read
@@ -201,7 +185,7 @@ i_([])     --> [].
 i_([C|Cs]) --> any_case(C), i_(Cs).
 
 parse_txt([]).
-parse_txt(Txt) :- phrase(bibs(Bibs), Txt). %, write(Bibs).
+parse_txt(Txt) :- phrase(bibs(Bibs), Txt).
 
 bibs([Bib | Bibs]) --> s_, bib(Bib), s_, bibs(Bibs).
 bibs([]) --> [].
@@ -248,7 +232,9 @@ bib_braces(Val) --> parse_brace(ValC), {atom_codes(Val, ValC)}.
 bib_quotes(Val) --> parse_quote(ValC), {atom_codes(Val, ValC)}.
 
 
-%parse_brace(Val) --> "{", parse_bstring(ValS), "}", {append( [0'{| ValS], "}", Val)}.
+% Use the below if the string parens are required (to know what kind of string it was)
+% parse_brace(Val) --> "{", parse_bstring(ValS), "}", {append( [0'{| ValS], "}", Val)}.
+
 parse_brace(Val) --> "{", parse_bstring(Val), "}".
 
 parse_bstring([0'\\| [Char|Val]] ) --> "\\", [Char], parse_bstring(Val).
@@ -256,13 +242,113 @@ parse_bstring([Char|Val]) --> [Char], {not_brace(Char)}, parse_bstring(Val).
 parse_bstring(Val) --> parse_brace(ValA), parse_bstring(ValB), {append(ValA, ValB, Val)}.
 parse_bstring([]) --> [].
 
-%parse_quote(Val) --> "\"", parse_qstring(ValS), "\"", {append( [0'"| ValS], "\"", Val)}.
+% Use the below if the string parens are required (to know what kind of string it was)
+% parse_quote(Val) --> "\"", parse_qstring(ValS), "\"", {append( [0'"| ValS], "\"", Val)}.
+
 parse_quote(Val) --> "\"", parse_qstring(Val), "\"".
 
-parse_qstring([0'\\| [Char|Val]] ) --> "\\", [Char], parse_qstring(Val). %{write('Warning escaped Quote'), nl}.
+% Warning escaped Quote
+parse_qstring([0'\\| [Char|Val]] ) --> "\\", [Char], parse_qstring(Val).
 parse_qstring(Val) --> parse_brace(V), parse_qstring(U), {append(V, U, Val)}.
 parse_qstring([Char|Val]) --> [Char], {not_quote(Char)}, parse_qstring(Val).
 parse_qstring([]) --> [].
 
+
+%--------------------------------------------------------
+% Some colour
+%--------------------------------------------------------
+c_red(Str):- write('0;31m'), write(Str),write('[0m').
+c_green(Str):- write('[0;32m'), write(Str),write('[0m').
+c_yellow(Str):- write('[0;33m'), write(Str),write('[0m').
+c_byellow(Str):- write('[1;33m'), write(Str),write('[0m').
+c_blue(Str):- write('[0;34m'), write(Str),write('[0m').
+c_magenta(Str):- write('[0;35m'), write(Str),write('[0m').
+c_cyan(Str):- write('[0;36m'), write(Str),write('[0m').
+c_white(Str):- write('[0;37m'), write(Str),write('[0m').
+
+%--------------------------------------------------------
+% Load bibtex files
+%--------------------------------------------------------
+
+load_bib(File) :-
+  read_txt(File, Txt),
+  parse_txt(Txt).
+
+%--------------------------------------------------------
+read_line(Codes) :-
+    get0(Code),
+    (   Code < 0 /* end of file */ -> Codes = "exit"
+    ;   Code =:= 10 /* end of line */ -> Codes = []
+    ;   Codes = [Code|Codes1],
+        read_line(Codes1)
+    ).
+
+%--------------------------------------------------------
+% Commands
+%--------------------------------------------------------
+
+parse_line(Line, Cmd) :- 
+  phrase(read_command(Cmd), Line) ; Cmd = unknown.
+
+read_kv(pair(Key, Value)) -->
+  alphanum(KeyC), s_, ":", s_, alphanum(ValueC), {atom_codes(Key, KeyC), atom_codes(Value, ValueC)}.
+
+read_command(exit) --> "exit".
+read_command(no) --> s_.
+
+read_command(or(P1, P2)) -->
+  s_, read_expr(P1), s_, ";", s_, read_command(P2), s_.
+
+read_command(and(P1, P2)) -->
+  s_, read_expr(P1), s_, ",", s_, read_command(P2), s_.
+
+read_command(P) --> s_, read_expr(P), s_.
+
+read_command(no) --> [].
+
+read_expr(Pair) --> read_kv(Pair).
+read_expr(E) --> "(", read_command(E), ")".
+
+
+%--------------------------------------------------------
+
+process_cmd(unknown) :-
+  write('*'), nl.
+
+process_cmd(E) :-
+  bagof(Res, process_expr(E, Res), ResL),
+  awrite(ResL), nl.
+
+process_expr(pair(K,V), Res) :- 
+  i(K,V, Res).
+
+process_expr(or(E1,E2), Res) :-
+  process_expr(E1, Res) ; process_expr(E2, Res).
+
+process_expr(and(E1,E2), Res) :-
+  process_expr(E1, Res), process_expr(E2, Res).
+
+
+%--------------------------------------------------------
+% Standard Incantation for a REPL
+%--------------------------------------------------------
+
+do_command :-
+  write('bib> '),
+  read_line(Line),!,
+  parse_line(Line, Cmd),
+  ( Cmd = exit, halt ;
+    Cmd = no, do_command ;
+    process_cmd(Cmd),
+    do_command
+  ).
+
+
+main :-
+  load_bib('.bib.db'),
+  do_command.
+
+:- dynamic([bibentry/3]).
+:- initialization(main).
 
 

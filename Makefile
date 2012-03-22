@@ -1,4 +1,4 @@
-all: bib2pl
-bib2pl: bib2pl.pl
-	gplc --no-susp-warn --no-redef-error --no-singl-warn --no-debugger bib2pl.pl
+all: bibdb
+bibdb: bibdb.pl
+	gplc --no-susp-warn --no-redef-error --no-singl-warn --no-debugger bibdb.pl
 	# --no-top-level 
