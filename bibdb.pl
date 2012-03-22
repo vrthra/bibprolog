@@ -210,12 +210,13 @@ bib_kv(i(Key,Val)) -->
 bib_key(Key) --> wordanum(KeyC), {atom_codes(Key, KeyC)}.
 
 bib_value(Val) -->(bib_braces(V1) ; bib_quotes(V1) ; bib_word(V1)),
-  s_, "#", s_, bib_value(V2), {[V1,V2] = Val}. % TODO, fetch from string db
+  s_, "#", s_, bib_value(V2),
+  {list(V2) -> Val = [V1|V2] ; [V1,V2] = Val}. % TODO, fetch from string db
 bib_value(Val) --> bib_word(Val).
 bib_value(Val) --> bib_braces(Val).
 bib_value(Val) --> bib_quotes(Val).
 
-bib_word(Val) --> wordanum(ValC), {atom_codes(Val, ValC)}.
+bib_word(word(Val)) --> wordanum(ValC), {atom_codes(Val, ValC)}.
 bib_braces(Val) --> parse_brace(ValC), {atom_codes(Val, ValC)}.
 bib_quotes(Val) --> parse_quote(ValC), {atom_codes(Val, ValC)}.
 
@@ -350,7 +351,17 @@ eswrite([E|Es]):- ewrite(E), nl, eswrite(Es).
 eswrite([]).
 
 ewrite(i(K,V)):-
-  write('  '),format('~15a', [K]), c_blue(': '), write(V).
+  write('  '),format('~15a', [K]), c_blue(': '), wvals(V).
+
+wvals([V|Vs]) :- wval(V), wvals(Vs).
+wvals([]).
+wvals(V) :- wval(V).
+
+wval(word(K)):-
+  bibentry(string, K, [_,i(val,V)]), write(V).
+  %write('<'),write(K),write(':'),write(V),write('>').
+
+wval(A):- print(A).
 
 ulcaseatom(L, U) :-
   atom_chars(L, Ls), 
