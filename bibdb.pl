@@ -345,7 +345,7 @@ do_command :-
 
 
 main :-
-  load_bib('.bib.db'),
+  load_bib('.db.bib'),
   do_command.
 
 :- dynamic([bibentry/3]).
