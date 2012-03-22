@@ -2,7 +2,7 @@
 % --------------------------------------------
 % CLI for interacting with a bibtex db.
 % Enter your bibtex file to .bib.db
-% i.e cat wang.bib > .bib.db
+% i.e cat wang.bib > .db.bib
 % --------------------------------------------
 
 % address: Publisher's address (usually just the city, but can be the full address for lesser-known publishers)
@@ -87,34 +87,14 @@
 %   Required fields: author, title, note
 %   Optional fields: month, year, key
 
-awrite([L|Ls]) :- print(L), nl, awrite(Ls).
-awrite([]).
-
 i(K,V, bibentry(Type, Key, Entries)):-
   bibentry(Type, Key, Entries),
   member(i(K,V), Entries).
-
-portray(bibentry(Type, Key, Entries)):- bwrite(bibentry(Type, Key, Entries)).
-
-bwrite(bibentry(Type,Key,Entries)):-
-  c_blue(Type), write(' '), c_yellow(Key), nl,
-  eswrite(Entries), nl.
-
-eswrite([E|Es]):- ewrite(E), nl, eswrite(Es).
-eswrite([]).
-
-ewrite(i(K,V)):-
-  write('  '),format('~15a', [K]), c_blue(':'), write(V).
 
 read_txt(FName, Txt) :-
   open(FName, read, File),
   read_file(File, Txt),
   close(File).
-
-put_all([]).
-put_all([X|Xs]) :-
-  put_code(X),
-  put_all(Xs).
 
 read_file(Stream, []) :- at_end_of_stream(Stream).
 read_file(Stream, [X|L]) :-
@@ -122,17 +102,8 @@ read_file(Stream, [X|L]) :-
   get_code(Stream, X),
   read_file(Stream, L).
 
-ulcaseatom(L, U) :-
-  atom_chars(L, Ls), 
-  ulcase(Ls, Us),
-  atom_chars(U, Us). % !!!! this is dependent on sequence.
-
-%char_code(C, 0'a), lower_upper(C,A).
-ulcase([L|Ls], [U|Us]) :-
-  lower_upper(L, U),
-  ulcase(Ls, Us).
-ulcase([], []).
-
+% ============================================================
+%  DCG support.
 % ============================================================
 isalpha(Ch) :-
   Ch >= 0'a, Ch =< 0'z -> true ; Ch >= 0'A, Ch =< 0'Z -> true.
@@ -189,12 +160,14 @@ wordanum(L0, L) -->
 s1_ --> (" ";"\n" ; "\t"), s_.
 s_ --> s1_ ; "".
 
-% ============================================================
-
 any_case(XX) --> [X], { char_code(C, X), lower_upper(CC, C), char_code(CC, XX)}. 
 
 i_([])     --> []. 
 i_([C|Cs]) --> any_case(C), i_(Cs).
+
+% ============================================================
+%  Now the bibtex parser.
+% ============================================================
 
 parse_txt([]).
 parse_txt(Txt) :- phrase(bibs(Bibs), Txt), apply(Bibs).
@@ -245,7 +218,6 @@ bib_value(Val) --> bib_quotes(Val).
 bib_word(Val) --> wordanum(ValC), {atom_codes(Val, ValC)}.
 bib_braces(Val) --> parse_brace(ValC), {atom_codes(Val, ValC)}.
 bib_quotes(Val) --> parse_quote(ValC), {atom_codes(Val, ValC)}.
-
 
 % Use the below if the string parens are required (to know what kind of string it was)
 % parse_brace(Val) --> "{", parse_bstring(ValS), "}", {append( [0'{| ValS], "}", Val)}.
@@ -299,32 +271,36 @@ read_line(Codes) :-
     ).
 
 %--------------------------------------------------------
-% Commands
+% Read User Commands
 %--------------------------------------------------------
+
+kv_to_atom(KeyC, ValueC, Key, Value):- atom_codes(Key, KeyC), atom_codes(Value, ValueC).
 
 parse_line(Line, Cmd) :- 
   phrase(read_command(Cmd), Line) ; Cmd = unknown.
 
-read_kv(pair(Key, Value)) -->
-  alphanum(KeyC), s_, ":", s_, alphanum(ValueC), {atom_codes(Key, KeyC), atom_codes(Value, ValueC)}.
+read_kv(pair(Key, Value)) --> read_kvc(v(Key, Value, ":")).
 
 read_kv(has(Key, Value)) -->
-  alphanum(KeyC), s_, "~", s_, alphanum(ValueC), {atom_codes(Key, KeyC), atom_codes(Value, ValueC)}.
+  alphanum(KeyC), s_, "~", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
 
 read_kv(ne(Key, Value)) -->
-  alphanum(KeyC), s_, "!", s_, alphanum(ValueC), {atom_codes(Key, KeyC), atom_codes(Value, ValueC)}.
+  alphanum(KeyC), s_, "!", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
 
 read_kv(gt(Key, Value)) -->
-  alphanum(KeyC), s_, ">", s_, alphanum(ValueC), {atom_codes(Key, KeyC), atom_codes(Value, ValueC)}.
+  alphanum(KeyC), s_, ">", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
 
 read_kv(lt(Key, Value)) -->
-  alphanum(KeyC), s_, "<", s_, alphanum(ValueC), {atom_codes(Key, KeyC), atom_codes(Value, ValueC)}.
+  alphanum(KeyC), s_, "<", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
 
 read_kv(ge(Key, Value)) -->
-  alphanum(KeyC), s_, ">=", s_, alphanum(ValueC), {atom_codes(Key, KeyC), atom_codes(Value, ValueC)}.
+  alphanum(KeyC), s_, ">=", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
 
 read_kv(le(Key, Value)) -->
-  alphanum(KeyC), s_, "<=", s_, alphanum(ValueC), {atom_codes(Key, KeyC), atom_codes(Value, ValueC)}.
+  alphanum(KeyC), s_, "<=", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
+
+read_kvc(v(Key, Value, C)) -->
+  alphanum(KeyC), s_, ":", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
 
 
 read_command(exit) --> "exit".
@@ -345,6 +321,40 @@ read_expr(E) --> "(", read_command(E), ")".
 
 
 %--------------------------------------------------------
+% Some libraries
+%--------------------------------------------------------
+awrite([L|Ls]) :- print(L), nl, awrite(Ls).
+awrite([]).
+portray(bibentry(Type, Key, Entries)):- bwrite(bibentry(Type, Key, Entries)).
+
+bwrite(bibentry(Type,Key,Entries)):-
+  c_blue(Type), write(' '), c_yellow(Key), nl,
+  eswrite(Entries), nl.
+
+eswrite([E|Es]):- ewrite(E), nl, eswrite(Es).
+eswrite([]).
+
+ewrite(i(K,V)):-
+  write('  '),format('~15a', [K]), c_blue(':'), write(V).
+
+ulcaseatom(L, U) :-
+  atom_chars(L, Ls), 
+  ulcase(Ls, Us),
+  atom_chars(U, Us). % !!!! this is dependent on sequence.
+
+%char_code(C, 0'a), lower_upper(C,A).
+ulcase([L|Ls], [U|Us]) :-
+  lower_upper(L, U),
+  ulcase(Ls, Us).
+ulcase([], []).
+
+%--------------------------------------------------------
+find_num(K,V, N, V1, N1, Res) :- 
+  atom_codes(V, V1),
+  phrase(digits(N), V1),
+  i(K,Vi, Res),
+  atom_codes(Vi, Vi1),
+  phrase(digits(N1), Vi1).
 
 process_cmd(unknown) :-
   write('*'), nl.
@@ -357,41 +367,23 @@ process_expr(pair(K,V), Res) :-
   i(K,V, Res).
 
 process_expr(gt(K,V), Res) :- 
-  atom_codes(V, V1),
-  phrase(digits(N), V1),
-  i(K,Vi, Res),
-  atom_codes(Vi, Vi1),
-  phrase(digits(N1), Vi1),
+  find_num(K,V,N,V1,N1, Res),
   N1 #># N, fd_domain([N,N1],1,10000).
 
 process_expr(lt(K,V), Res) :- 
-  atom_codes(V, V1),
-  phrase(digits(N), V1),
-  i(K,Vi, Res),
-  atom_codes(Vi, Vi1),
-  phrase(digits(N1), Vi1),
+  find_num(K,V,N,V1,N1, Res),
   N1 #<# N, fd_domain([N,N1],1,10000).
 
 process_expr(ge(K,V), Res) :- 
-  atom_codes(V, V1),
-  phrase(digits(N), V1),
-  i(K,Vi, Res),
-  atom_codes(Vi, Vi1),
-  phrase(digits(N1), Vi1),
+  find_num(K,V,N,V1,N1, Res),
   N1 #>=# N, fd_domain([N,N1],1,10000).
 
 process_expr(le(K,V), Res) :- 
-  atom_codes(V, V1),
-  phrase(digits(N), V1),
-  i(K,Vi, Res),
-  atom_codes(Vi, Vi1),
-  phrase(digits(N1), Vi1),
+  find_num(K,V,N,V1,N1, Res),
   N1 #=<# N, fd_domain([N,N1],1,10000).
-
 
 process_expr(ne(K,V), Res) :- 
   i(K,V1, Res), V \= V1.
-
 
 process_expr(has(K,V), Res) :- 
   i(K,V1, Res), ulcaseatom(V1, V2), ulcaseatom(V, Vi), sub_atom(V2, _, _, _, Vi).
