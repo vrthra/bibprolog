@@ -247,14 +247,25 @@ parse_qstring([]) --> [].
 %--------------------------------------------------------
 % Some colour
 %--------------------------------------------------------
-c_red(Str):- write('0;31m'), write(Str),write('[0m').
-c_green(Str):- write('[0;32m'), write(Str),write('[0m').
-c_yellow(Str):- write('[0;33m'), write(Str),write('[0m').
+c_red(Str)    :- write('[0;31m'), write(Str),write('[0m').
+c_green(Str)  :- write('[0;32m'), write(Str),write('[0m').
+c_yellow(Str) :- write('[0;33m'), write(Str),write('[0m').
 c_byellow(Str):- write('[1;33m'), write(Str),write('[0m').
-c_blue(Str):- write('[0;34m'), write(Str),write('[0m').
+c_blue(Str)   :- write('[0;34m'), write(Str),write('[0m').
 c_magenta(Str):- write('[0;35m'), write(Str),write('[0m').
-c_cyan(Str):- write('[0;36m'), write(Str),write('[0m').
-c_white(Str):- write('[0;37m'), write(Str),write('[0m').
+c_cyan(Str)   :- write('[0;36m'), write(Str),write('[0m').
+c_white(Str)  :- write('[0;37m'), write(Str),write('[0m').
+
+c_start(red) :- write('[0;31m').
+c_start(green) :- write('[0;32m').
+c_start(yellow):- write('[0;33m').
+c_start(byellow):- write('[1;33m').
+c_start(blue):- write('[0;34m').
+c_start(magenta):- write('[0;35m').
+c_start(cyan):- write('[0;36m').
+c_start(_):- write('[0;37m').
+c_end :- write('[0m').
+
 
 %--------------------------------------------------------
 % Load bibtex files
@@ -277,41 +288,41 @@ read_line(Codes) :-
 % Read User Commands
 %--------------------------------------------------------
 
-kv_to_atom(KeyC, ValueC, Key, Value):- atom_codes(Key, KeyC), atom_codes(Value, ValueC).
-
 parse_line(Line, Cmd) :- 
   phrase(read_command(Cmd), Line) ; Cmd = unknown.
 
 read_kv(pair(Key, Value)) --> 
-  alphanum(KeyC), s_, ":", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
+  alphanum_a(Key), s_, ":", s_, alphanum_a(Value).
 
 read_kv(pair(Key, Value)) --> 
-  alphanum(KeyC), s_, ":", s_, {kv_to_atom(KeyC, "", Key, Value)}.
+  alphanum_a(Key), s_, ":", s_, {atom_codes(Value,"")}.
 
 read_kv(has(Key, Value)) -->
-  alphanum(KeyC), s_, "~", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
+  alphanum_a(Key), s_, "~", s_, alphanum_a(Value).
 
 read_kv(has(Key, Value)) --> 
-  alphanum(KeyC), s_, "~", s_, {kv_to_atom(KeyC, "", Key, Value)}.
+  alphanum_a(Key), s_, "~", s_, {atom_codes(Value,"")}.
 
 read_kv(ne(Key, Value)) -->
-  alphanum(KeyC), s_, "!", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
+  alphanum_a(Key), s_, "!", s_, alphanum_a(Value).
 
 read_kv(gt(Key, Value)) -->
-  alphanum(KeyC), s_, ">", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
+  alphanum_a(Key), s_, ">", s_, alphanum_a(Value).
 
 read_kv(lt(Key, Value)) -->
-  alphanum(KeyC), s_, "<", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
+  alphanum_a(Key), s_, "<", s_, alphanum_a(Value).
 
 read_kv(ge(Key, Value)) -->
-  alphanum(KeyC), s_, ">=", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
+  alphanum_a(Key), s_, ">=", s_, alphanum_a(Value).
 
 read_kv(le(Key, Value)) -->
-  alphanum(KeyC), s_, "<=", s_, alphanum(ValueC), {kv_to_atom(KeyC, ValueC, Key, Value)}.
+  alphanum_a(Key), s_, "<=", s_, alphanum_a(Value).
 
 
 read_command(exit) --> "exit".
+read_command(help) --> "help".
 read_command(show(V)) --> "show", s_, alphanum_a(V), s_.
+read_command(colour(K,V)) --> ("colour" ; "color"), s_, alphanum_a(K), s_, alphanum_a(V), s_.
 read_command(no) --> s_.
 
 read_command(or(P1, P2)) -->
@@ -327,7 +338,7 @@ read_command(no) --> [].
 
 read_expr(Pair) --> read_kv(Pair).
 read_expr(E) --> "(", read_command(E), ")".
-read_expr(all(V)) --> s_, "*", alphanum(VC), s_, {atom_codes(V,VC)}.
+read_expr(all(V)) --> s_, "*", alphanum_a(V), s_.
 read_expr(all('')) --> s_, "*", s_.
 
 %--------------------------------------------------------
@@ -345,7 +356,7 @@ portray(bibentry(preamble,Key,[i(key,Key),i(val,Entry)])):-
 portray(bibentry(string,Key,[i(key,Key), i(val,Entry)])):-
   c_yellow(Key), write(' = '), print(Entry).
 
-portray(bibentry(Type,Key,Entries)) :- opt(prolog),
+portray(bibentry(Type,Key,Entries)) :- opt(show,prolog),
   write('bibentry('), c_blue(Type), write(', '), c_yellow(Key),write(','), nl,
   write('['),nl,
   awrite(Entries),
@@ -353,7 +364,7 @@ portray(bibentry(Type,Key,Entries)) :- opt(prolog),
   write(')'),
   nl.
 
-portray(bibentry(Type,Key,Entries)) :- opt(bib),
+portray(bibentry(Type,Key,Entries)) :- opt(show,bib),
   write('@'),c_blue(Type), write('{'), c_yellow(Key),write(','), nl,
   awrite(Entries),
   write('}'),
@@ -363,16 +374,21 @@ portray(bibentry(Type,Key,Entries)) :-
   c_blue(Type), write(' '), c_yellow(Key), nl,
   awrite(Entries), nl.
 
-portray(i(K,V)) :- opt(prolog),
-  write('  '),write('i('), write(K), write(', '), wvals(V), write('),').
+portray(i(K,V)) :- opt(show,prolog),
+  write('  '),write('i('), print(key(K)), write(', '), wvals(V), write('),').
 
-portray(i(K,V)) :- opt(bib),
-  write('  '),format('~15a', [K]), c_blue('= '), write('{'), wvals(V), write('},').
+portray(i(K,V)) :- opt(show,bib),
+  write('  '), print(key(K)), c_blue('= '), write('{'), wvals(V), write('},').
 
 portray(i(K,V)) :-
-  write('  '),format('~15a', [K]), c_blue(': '), wvals(V).
+  write('  '), print(key(K)), c_blue(': '), wvals(V).
 
-portray(word(K)) :- opt(prolog), write('word('),print(K),write(')').
+portray(key(K)) :-
+  mycolour(K,V), c_start(V), (opt(show,prolog) -> write(K) ; format('~15a', [K])), c_end.
+portray(key(K)) :-
+  (opt(show,prolog) -> write(K) ; format('~15a', [K])).
+
+portray(word(K)) :- opt(show,prolog), write('word('),print(K),write(')').
 
 % String substitution happens here.
 portray(word(K)) :-
@@ -380,7 +396,7 @@ portray(word(K)) :-
 
 wvals([V|Vs]) :- print(V), wvals(Vs).
 wvals([]).
-wvals(V) :- opt(prolog),write('\''), print(V), write('\'').
+wvals(V) :- opt(show,prolog),write('\''), print(V), write('\'').
 wvals(V) :- print(V).
 
 ulcaseatom(L, U) :-
@@ -404,9 +420,24 @@ find_num(K,V, N, V1, N1, Res) :-
 process_cmd(unknown) :-
   write('*'), nl.
 
+process_cmd(help) :-
+  write('COMMANDS'),nl,
+  tab(1),write('help'),nl,
+  tab(1),write('colour <key> <value>'),nl,
+  tab(2),write('  e.g: colour title red'),nl,
+  tab(1),write('*'),nl,
+  tab(1),write('*<type>'),nl,
+  tab(2),write('  e.g: *article'),nl,
+  tab(1),write('*show <bib|prolog|format>'),nl,
+  tab(2),write('  e.g: show bib'),nl.
+
 process_cmd(show(V)) :-
-  retractall(opt(_)),
-  assertz(opt(V)).
+  retractall(opt(show,_)),
+  assertz(opt(show,V)).
+
+process_cmd(colour(K,V)) :-
+  assertz(mycolour(K,V)).
+
 
 process_cmd(E) :-
   setof(Res, process_expr(E, Res), ResL),
@@ -467,7 +498,7 @@ main :-
   load_bib('.db.bib'),
   do_command.
 
-:- dynamic([bibentry/3, opt/1]).
+:- dynamic([bibentry/3, opt/2, mycolour/2]).
 :- initialization(main).
 
 
