@@ -144,6 +144,8 @@ alphanum(L0, L) -->
   {L1 = [Char|L0] },
   (alphanum(L1, L) ; {reverse(L1, L) }).
 
+alphanum_a(L) --> alphanum(LC),{atom_codes(L, LC)}.
+
 punctanum(L) --> punctanum([], L).
 punctanum(L0, L) --> 
   [Char], {isalpha(Char) ; isdigit(Char) ; ispunct(Char)},
@@ -309,6 +311,7 @@ read_kv(le(Key, Value)) -->
 
 
 read_command(exit) --> "exit".
+read_command(show(V)) --> "show", s_, alphanum_a(V), s_.
 read_command(no) --> s_.
 
 read_command(or(P1, P2)) -->
@@ -332,43 +335,59 @@ read_expr(all('')) --> s_, "*", s_.
 %--------------------------------------------------------
 awrite([L|Ls]) :- print(L), nl, awrite(Ls).
 awrite([]).
-portray(bibentry(Type, Key, Entries)):- bwrite(bibentry(Type, Key, Entries)).
 
-bwrite(bibentry(comment,Key,[i(key, Entry)])):-
+portray(bibentry(comment,Key,[i(key, Entry)])) :-
   c_green('>'), write(' '), c_green(Entry).
 
-bwrite(bibentry(preamble,Key,[i(key,Key),i(val,Entry)])):-
+portray(bibentry(preamble,Key,[i(key,Key),i(val,Entry)])):-
   c_blue('*>'), write(' '), c_yellow(Entry).
 
-bwrite(bibentry(string,Key,[i(key,Key), i(val,Entry)])):-
+portray(bibentry(string,Key,[i(key,Key), i(val,Entry)])):-
   c_yellow(Key), write(' = '), print(Entry).
 
-bwrite(bibentry(Type,Key,Entries)):-
+portray(bibentry(Type,Key,Entries)) :- opt(prolog),
+  write('bibentry('), c_blue(Type), write(', '), c_yellow(Key),write(','), nl,
+  write('['),nl,
+  awrite(Entries),
+  write(']'),nl,
+  write(')'),
+  nl.
+
+portray(bibentry(Type,Key,Entries)) :- opt(bib),
+  write('@'),c_blue(Type), write('{'), c_yellow(Key),write(','), nl,
+  awrite(Entries),
+  write('}'),
+  nl.
+
+portray(bibentry(Type,Key,Entries)) :- 
   c_blue(Type), write(' '), c_yellow(Key), nl,
-  eswrite(Entries), nl.
+  awrite(Entries), nl.
 
-eswrite([E|Es]):- ewrite(E), nl, eswrite(Es).
-eswrite([]).
+portray(i(K,V)) :- opt(prolog),
+  write('  '),write('i('), write(K), write(', '), wvals(V), write('),').
 
-ewrite(i(K,V)):-
+portray(i(K,V)) :- opt(bib),
+  write('  '),format('~15a', [K]), c_blue('= '), write('{'), wvals(V), write('},').
+
+portray(i(K,V)) :-
   write('  '),format('~15a', [K]), c_blue(': '), wvals(V).
 
-wvals([V|Vs]) :- wval(V), wvals(Vs).
+portray(word(K)) :- opt(prolog), write('word('),print(K),write(')').
+
+% String substitution happens here.
+portray(word(K)) :-
+  bibentry(string, K, [_,i(val,V)]), print(V).
+
+wvals([V|Vs]) :- print(V), wvals(Vs).
 wvals([]).
-wvals(V) :- wval(V).
-
-wval(word(K)):-
-  bibentry(string, K, [_,i(val,V)]), write(V).
-  %write('<'),write(K),write(':'),write(V),write('>').
-
-wval(A):- print(A).
+wvals(V) :- opt(prolog),write('\''), print(V), write('\'').
+wvals(V) :- print(V).
 
 ulcaseatom(L, U) :-
   atom_chars(L, Ls), 
   ulcase(Ls, Us),
   atom_chars(U, Us). % !!!! this is dependent on sequence.
 
-%char_code(C, 0'a), lower_upper(C,A).
 ulcase([L|Ls], [U|Us]) :-
   lower_upper(L, U),
   ulcase(Ls, Us).
@@ -384,6 +403,10 @@ find_num(K,V, N, V1, N1, Res) :-
 
 process_cmd(unknown) :-
   write('*'), nl.
+
+process_cmd(show(V)) :-
+  retractall(opt(_)),
+  assertz(opt(V)).
 
 process_cmd(E) :-
   setof(Res, process_expr(E, Res), ResL),
@@ -444,7 +467,7 @@ main :-
   load_bib('.db.bib'),
   do_command.
 
-:- dynamic([bibentry/3]).
+:- dynamic([bibentry/3, opt/1]).
 :- initialization(main).
 
 
