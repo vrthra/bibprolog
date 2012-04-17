@@ -243,29 +243,31 @@ parse_qstring(Val) --> parse_brace(V), parse_qstring(U), {append(V, U, Val)}.
 parse_qstring([Char|Val]) --> [Char], {not_quote(Char)}, parse_qstring(Val).
 parse_qstring([]) --> [].
 
+color(red, '[0;31m').
+color(green, '[0;32m').
+color(yellow, '[0;33m').
+color(blue, '[0;34m').
+color(magenta, '[0;35m').
+color(cyan, '[0;36m').
+color(white, '[0;37m').
+
+color(bred, '[1;31m').
+color(bgreen, '[1;32m').
+color(byellow, '[1;33m').
+color(bblue, '[1;34m').
+color(bmagenta, '[1;35m').
+color(bcyan, '[1;36m').
+color(bwhite, '[1;37m').
+color(_, '[0;37m').
+
+color(end, '[0m').
 
 %--------------------------------------------------------
 % Some colour
 %--------------------------------------------------------
-c_red(Str)    :- write('[0;31m'), write(Str),write('[0m').
-c_green(Str)  :- write('[0;32m'), write(Str),write('[0m').
-c_yellow(Str) :- write('[0;33m'), write(Str),write('[0m').
-c_byellow(Str):- write('[1;33m'), write(Str),write('[0m').
-c_blue(Str)   :- write('[0;34m'), write(Str),write('[0m').
-c_magenta(Str):- write('[0;35m'), write(Str),write('[0m').
-c_cyan(Str)   :- write('[0;36m'), write(Str),write('[0m').
-c_white(Str)  :- write('[0;37m'), write(Str),write('[0m').
-
-c_start(red) :- write('[0;31m').
-c_start(green) :- write('[0;32m').
-c_start(yellow):- write('[0;33m').
-c_start(byellow):- write('[1;33m').
-c_start(blue):- write('[0;34m').
-c_start(magenta):- write('[0;35m').
-c_start(cyan):- write('[0;36m').
-c_start(_):- write('[0;37m').
+c_show(C,Str) :- color(C,Col), color(end,End), format("~w~w~w", [Col,Str,End]).
+c_start(C) :- color(C,Col), write(Col).
 c_end :- write('[0m').
-
 
 %--------------------------------------------------------
 % Load bibtex files
@@ -348,16 +350,16 @@ awrite([L|Ls]) :- print(L), nl, awrite(Ls).
 awrite([]).
 
 portray(bibentry(comment,Key,[i(key, Entry)])) :-
-  c_green('>'), write(' '), c_green(Entry).
+  c_show(green,'>'), write(' '), c_show(green,Entry).
 
 portray(bibentry(preamble,Key,[i(key,Key),i(val,Entry)])):-
-  c_blue('*>'), write(' '), c_yellow(Entry).
+  c_show(blue,'*>'), write(' '), c_show(yellow,Entry).
 
 portray(bibentry(string,Key,[i(key,Key), i(val,Entry)])):-
-  c_yellow(Key), write(' = '), print(Entry).
+  c_show(yellow,Key), write(' = '), print(Entry).
 
 portray(bibentry(Type,Key,Entries)) :- opt(show,prolog),
-  write('bibentry('), c_blue(Type), write(', '), c_yellow(Key),write(','), nl,
+  write('bibentry('), c_show(blue,Type), write(', '), c_show(yellow,Key),write(','), nl,
   write('['),nl,
   awrite(Entries),
   write(']'),nl,
@@ -365,23 +367,23 @@ portray(bibentry(Type,Key,Entries)) :- opt(show,prolog),
   nl.
 
 portray(bibentry(Type,Key,Entries)) :- opt(show,bib),
-  write('@'),c_blue(Type), write('{'), c_yellow(Key),write(','), nl,
+  write('@'),c_show(blue, Type), write('{'), c_show(yellow, Key),write(','), nl,
   awrite(Entries),
   write('}'),
   nl.
 
 portray(bibentry(Type,Key,Entries)) :- 
-  c_blue(Type), write(' '), c_yellow(Key), nl,
+  c_show(blue,Type), write(' '), c_show(yellow,Key), nl,
   awrite(Entries), nl.
 
 portray(i(K,V)) :- opt(show,prolog),
   write('  '),write('i('), print(key(K)), write(', '), wvals(V), write('),').
 
 portray(i(K,V)) :- opt(show,bib),
-  write('  '), print(key(K)), c_blue('= '), write('{'), wvals(V), write('},').
+  write('  '), print(key(K)), c_show(blue,'= '), write('{'), wvals(V), write('},').
 
 portray(i(K,V)) :-
-  write('  '), print(key(K)), c_blue(': '), wvals(V).
+  write('  '), print(key(K)), c_show(blue,': '), wvals(V).
 
 portray(key(K)) :-
   mycolour(K,V), c_start(V), (opt(show,prolog) -> write(K) ; format('~15a', [K])), c_end.
